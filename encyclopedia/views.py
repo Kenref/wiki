@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django import forms
+from random import choice
 
 from . import util
 
@@ -8,7 +9,7 @@ class NewTaskForm(forms.Form):
     content = forms.CharField(label="Content")
 
 class EditTaskForm(forms.Form):
-    content = forms.CharField(label="Edit Page Content")
+    content = forms.CharField(label="Edit Page Content", widget=forms.Textarea(attrs={'rows': 10, 'cols': 50, 'style': 'width: auto; height: auto;'}))
 
 def index(request):
     return render(request, "encyclopedia/index.html", {
@@ -60,4 +61,14 @@ def edit_page(request,page):
         "form": EditTaskForm(),
         "page": page,
         "content": content
+    })
+
+def random_page(request):
+    entries = util.list_entries()
+
+    random_page = choice(entries)
+    random_content = util.get_entry(random_page)
+    return render(request, "encyclopedia/page.html", {
+        "page": random_page,
+        "content": random_content,
     })
