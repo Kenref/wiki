@@ -1,7 +1,14 @@
 from django.shortcuts import render, redirect
+from django import forms
 
 from . import util
 
+class NewTaskForm(forms.Form):
+    page = forms.CharField(label="New Page")
+    content = forms.CharField(label="Content")
+
+class EditTaskForm(forms.Form):
+    content = forms.CharField(label="Edit Page Content")
 
 def index(request):
     return render(request, "encyclopedia/index.html", {
@@ -9,32 +16,48 @@ def index(request):
     })
 
 def page(request, page):
-    try:
-        info = util.get_entry(page)
-        body = info.split("\n", 2)[2]
-    except:
-        return render(request, f"encyclopedia/page.html", {
-        "title": page,
-        "body": "No page found"
-    })    
-    else:
-        return render(request, f"encyclopedia/page.html", {
-            "title": page,
-            "body": body
-        })
+    content = util.get_entry(page)
+    return render(request, "encyclopedia/page.html", {
+        "page": page,
+        "content": content,
+    })
     
 def search(request):
     query = request.GET.get('q', '')
-    try:
-        info = util.get_entry(query)
-        body = info.split("\n", 2)[2]
-    except:
-        return render(request, f"encyclopedia/page.html", {
-        "title": query,
-        "body": "No page found"
-    })    
-    else:
-        return render(request, f"encyclopedia/page.html", {
-            "title": query,
-            "body": body
-        })
+    content = util.get_entry(query) 
+    return render(request, "encyclopedia/page.html", {
+        "content": content
+    })
+
+def new_page(request): 
+    if request.method == "POST":
+        form = NewTaskForm(request.POST)
+        if form.is_valid():
+            page = form.cleaned_data["page"]
+            content = form.cleaned_data["content"]
+            util.save_entry(page, content)
+            return render(request, "encyclopedia/page.html", {
+                "page": page,
+                "content": content,
+            })
+    return render(request, "encyclopedia/new_page.html", {
+        "form": NewTaskForm()
+    })
+
+def edit_page(request,page):
+    if request.method == "POST":
+        form = EditTaskForm(request.POST)
+        if form.is_valid():
+            content = form.cleaned_data["content"]
+            util.save_entry(page, content)
+            return render(request, f"encyclopedia/page.html", {
+                "page": page,
+                "content": content,
+            })
+
+    content = util.get_entry(page)
+    return render(request, "encyclopedia/edit_page.html", {
+        "form": EditTaskForm(),
+        "page": page,
+        "content": content
+    })
